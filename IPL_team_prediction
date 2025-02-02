@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load dataset (replace 'ipl_data.csv' with actual dataset)
+df = pd.read_csv('ipl_data.csv')
+
+# Display first few rows
+print(df.head())
+
+# Drop irrelevant columns
+df = df[['team1', 'team2', 'toss_winner', 'venue', 'winner']]
+
+# Handle missing values
+df.dropna(inplace=True)
+
+# Encode categorical data
+encoder = LabelEncoder()
+for col in ['team1', 'team2', 'toss_winner', 'venue', 'winner']:
+    df[col] = encoder.fit_transform(df[col])
+
+# Define features and target
+X = df[['team1', 'team2', 'toss_winner', 'venue']]
+y = df['winner']
+
+# Split dataset into train & test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.2f}")
+
+# Function to predict match winner
+def predict_winner(team1, team2, toss_winner, venue):
+    input_data = pd.DataFrame([[team1, team2, toss_winner, venue]], columns=X.columns)
+    input_data = input_data.apply(lambda x: encoder.transform(x))
+    prediction = model.predict(input_data)
+    return encoder.inverse_transform(prediction)[0]
+
+# Example Prediction
+print(predict_winner('Mumbai Indians', 'Chennai Super Kings', 'Mumbai Indians', 'Wankhede Stadium'))
